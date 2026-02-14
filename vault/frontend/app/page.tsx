@@ -7,13 +7,14 @@ import WebcamVerifier from "@/components/WebcamVerifier";
 
 export default function Home() {
   const [account, setAccount] = useState("");
-  const [status, setStatus] = useState("Wallet not connected");
+  const [status, setStatus] = useState("Ready");
   const [loading, setLoading] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [humanVerified, setHumanVerified] = useState(false);
+  const [livenessScore, setLivenessScore] = useState<number | null>(null);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert("Install MetaMask");
+      alert("Please install MetaMask");
       return;
     }
 
@@ -21,12 +22,24 @@ export default function Home() {
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
 
-    setAccount(await signer.getAddress());
+    const address = await signer.getAddress();
+    setAccount(address);
     setStatus("✅ Wallet connected");
+  };
+
+  const handleVerified = (score: number) => {
+    setHumanVerified(true);
+    setLivenessScore(score);
+    setStatus("✅ Human verified (valid for 5 minutes)");
   };
 
   const mintProof = async () => {
     try {
+      if (!window.ethereum) {
+        alert("MetaMask not found");
+        return;
+      }
+
       setLoading(true);
       setStatus("⏳ Minting Proof of Life...");
 
@@ -60,38 +73,47 @@ export default function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-black text-white">
       <div className="bg-gray-900 p-8 rounded-xl space-y-6 w-full max-w-md">
-
         <h1 className="text-3xl font-bold text-center">🔐 The Vault</h1>
 
-        {/* WALLET CONNECT */}
-        {!account && (
+        {!humanVerified && (
+          <>
+            <p className="text-center text-sm text-gray-300">
+              Verify you are human
+            </p>
+            <WebcamVerifier onVerified={handleVerified} />
+          </>
+        )}
+
+        {humanVerified && (
+          <div className="bg-gray-800 p-4 rounded text-center">
+            <p className="text-green-400 font-bold mb-1">
+              Verification Complete
+            </p>
+            <p className="text-2xl font-bold">
+              {livenessScore} / 100
+            </p>
+            <p className="text-xs text-gray-400">
+              Liveness Score
+            </p>
+          </div>
+        )}
+
+        {humanVerified && !account && (
           <button
             onClick={connectWallet}
-            className="w-full py-3 bg-green-600 rounded"
+            className="w-full py-3 bg-green-600 rounded font-bold"
           >
-            Connect MetaMask
+            Get Portable Proof (Optional)
           </button>
         )}
 
-        {/* ACCOUNT */}
         {account && (
           <p className="text-xs break-all text-gray-400 text-center">
             {account}
           </p>
         )}
 
-        {/* WEBCAM FLOW */}
-        {account && !verified && (
-          <>
-            <p className="text-center text-sm text-gray-300">
-              Complete the liveness challenge
-            </p>
-            <WebcamVerifier onVerified={() => setVerified(true)} />
-          </>
-        )}
-
-        {/* MINT BUTTON */}
-        {account && verified && (
+        {humanVerified && account && (
           <button
             onClick={mintProof}
             disabled={loading}
@@ -101,9 +123,9 @@ export default function Home() {
           </button>
         )}
 
-        {/* STATUS */}
-        <p className="text-center text-sm">{status}</p>
-
+        <p className="text-center text-sm text-gray-300">
+          {status}
+        </p>
       </div>
     </main>
   );

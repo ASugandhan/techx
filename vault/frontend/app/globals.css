@@ -25,3 +25,11 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Hide Next.js error overlay and error badges */
+nextjs-portal,
+#__next-build-watcher,
+nextjs-toast-errors,
+nextjs-toast-errors-parent {
+  display: none !important;
+}
