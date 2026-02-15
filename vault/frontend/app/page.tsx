@@ -103,7 +103,7 @@ export default function Home() {
             onClick={connectWallet}
             className="w-full py-3 bg-green-600 rounded font-bold"
           >
-            Get Portable Proof (Optional)
+            Get Portable Proof
           </button>
         )}
 
